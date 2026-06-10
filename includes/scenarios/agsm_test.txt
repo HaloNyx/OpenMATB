@@ -1,0 +1,139 @@
+# ============================================================
+# OpenMATB — AGSM Greyout Demonstration Scenario
+# ============================================================
+#
+# PURPOSE
+# -------
+# This scenario runs the four standard MATB tasks alongside the
+# new greyout plugin.  Two AGSM episodes are triggered to
+# demonstrate both the visual onset and the recovery behaviour.
+#
+# WHAT HAPPENS
+# ------------
+# 0:00:00  All tasks + greyout plugin load and start.
+# 0:00:30  AGSM audio cue plays ("prompt_agsm.wav").
+#          After 0.5 s delay, greyout begins.
+#          The simulated sensor shows:
+#            - 0–2 s  : resting values  → greyout worsens
+#            - 2–5 s  : ramp-up phase   → greyout slows
+#            - 5 s+   : full AGSM       → greyout recovers
+# 0:01:15  Greyout is reset (clears overlay, stops monitoring).
+# 0:01:30  Second AGSM episode triggered.
+# 0:02:15  Final reset before tasks end.
+# 0:02:30  All tasks and greyout plugin stop.
+#
+# REQUIREMENTS
+# ------------
+# • Place  includes/sounds/english/male/prompt_agsm.wav
+#   (or any WAV file of that name) before running.
+#   If the file is absent the plugin logs a warning but
+#   continues; greyout still activates on schedule.
+#
+# • The greyout plugin reads from core/sensor_input.py.
+#   By default it uses SimulatedSensorInput (placeholder).
+#   Swap in real hardware by calling set_sensor() in main.py.
+#
+# HOW TO RUN
+# ----------
+#   python main.py
+#   Then select this file in the scenario browser, or set
+#   scenario_path=agsm_test.txt in config.ini.
+# ============================================================
+
+
+# ── 1. Initialise task parameters ──────────────────────────
+
+# System monitoring
+0:00:00;sysmon;scales-1-name;TEMP1
+0:00:00;sysmon;scales-2-name;PRES1
+0:00:00;sysmon;scales-3-name;TEMP2
+0:00:00;sysmon;scales-4-name;PRES2
+0:00:00;sysmon;lights-1-name;OK
+0:00:00;sysmon;lights-2-name;WARN
+0:00:00;sysmon;alerttimeout;10000
+0:00:00;sysmon;feedbackduration;1500
+
+# Tracking
+0:00:00;track;cursorcolor;#009900
+0:00:00;track;targetproportion;0.25
+
+# Communications
+0:00:00;communications;voiceidiom;english
+0:00:00;communications;voicegender;male
+
+# Greyout — optional rate tuning
+# (defaults 0.25 onset / 0.15 recovery are already set)
+# 0:00:00;greyout;onset_rate;0.30
+# 0:00:00;greyout;recovery_rate;0.20
+
+
+# ── 2. Start all tasks ──────────────────────────────────────
+
+0:00:00;sysmon;start
+0:00:00;track;start
+0:00:00;resman;start
+0:00:00;communications;start
+0:00:00;greyout;start
+
+
+# ── 3. Scenario events ──────────────────────────────────────
+
+# ── 3a. Regular MATB events (sysmon failures) ───────────────
+
+0:00:7;sysmon;scales-1-failure;True
+0:00:7;sysmon;scales-1-side;-1
+
+0:00:17;sysmon;scales-3-failure;True
+0:00:17;sysmon;scales-3-side;1
+
+# Communications prompt just before the AGSM cue
+0:00:20;communications;radioprompt;own
+
+
+# ── 3b. First AGSM episode ──────────────────────────────────
+
+# The cue plays "prompt_agsm.wav"; greyout starts 0.5 s later.
+# SimulatedSensorInput produces resting values for ~2 s (greyout
+# worsens), then ramps to full AGSM (greyout clears by ~0:01:05).
+0:00:40;greyout;agsm_prompt;True
+
+# Keep MATB events running during greyout
+0:00:48;sysmon;scales-2-failure;True
+0:00:48;sysmon;scales-2-side;1
+
+0:01:02;sysmon;lights-2-failure;True
+
+0:01:15;communications;radioprompt;own
+
+# Reset clears the overlay and stops monitoring
+0:01:25;greyout;reset
+
+
+# ── 3c. Rest period ─────────────────────────────────────────
+
+0:01:28;sysmon;scales-4-failure;True
+0:01:28;sysmon;scales-4-side;-1
+
+
+# ── 3d. Second AGSM episode ─────────────────────────────────
+
+0:01:45;greyout;agsm_prompt;True
+
+0:01:57;sysmon;scales-1-failure;True
+0:01:57;sysmon;scales-1-side;1
+
+0:02:10;communications;radioprompt;own
+
+0:02:23;sysmon;lights-1-failure;True
+
+# Final reset
+0:02:30;greyout;reset
+
+
+# ── 4. Stop all tasks ───────────────────────────────────────
+
+0:02:35;sysmon;stop
+0:02:35;track;stop
+0:02:35;resman;stop
+0:02:35;communications;stop
+0:02:35;greyout;stop

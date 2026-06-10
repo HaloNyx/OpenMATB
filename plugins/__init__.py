@@ -6,6 +6,7 @@ from .abstractplugin import AbstractPlugin  # noqa: F401
 from .communications import Communications  # noqa: F401
 from .genericscales import Genericscales  # noqa: F401
 from .generictrigger import Generictrigger  # noqa: F401
+from .greyout import Greyout  # noqa: F401          ← ADDED
 from .instructions import Instructions  # noqa: F401
 from .labstreaminglayer import Labstreaminglayer  # noqa: F401
 from .parallelport import Parallelport  # noqa: F401
